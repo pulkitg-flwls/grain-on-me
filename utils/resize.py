@@ -130,10 +130,10 @@ def exr_to_png(input_exr, output_png, bit_depth=8, gamma=2.2):
 
     # Normalize HDR to LDR (tone mapping)
     image = np.clip(image, 0, None)  # Ensure non-negative values
-    image = image / (np.max(image) + 1e-6)  # Normalize to [0, 1]
+    # image = image / (np.max(image) + 1e-6)  # Normalize to [0, 1]
 
     # Apply gamma correction
-    image = np.power(image, 1.0 / gamma)
+    image = np.power(image, 1/ gamma)
 
     # Convert to 8-bit or 16-bit format
     if bit_depth == 8:
@@ -146,18 +146,22 @@ def exr_to_png(input_exr, output_png, bit_depth=8, gamma=2.2):
 
     # Save PNG with OpenCV
     cv2.imwrite(output_png, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-    print(f"[INFO] Saved PNG: {output_png} (Bit Depth: {bit_depth}-bit)")
+    # print(f"[INFO] Saved PNG: {output_png} (Bit Depth: {bit_depth}-bit)")
     return True
 
 
 if __name__=="__main__":
     args = parse_args()
     os.makedirs(args.output_dir,exist_ok=True)
-    for imgs in os.listdir(args.dir1):
+    os.makedirs(os.path.join(args.output_dir,'png'),exist_ok=True)
+    # os.makedirs(os.path.join(args.output_dir,'resize'),exist_ok=True)
+    for imgs in tqdm(os.listdir(args.dir1)):
         # img = iio.imread(os.path.join(args.dir1, imgs))
         img = read_exr(os.path.join(args.dir1, imgs))
-        resize_img = resize_exr(img)
-        write_exr(os.path.join(args.output_dir,imgs),resize_img)
+        # resize_img = resize_exr(img)
+        # write_exr(os.path.join(args.output_dir,imgs),resize_img)
+
+        exr_to_png(os.path.join(args.dir1, imgs),os.path.join(args.output_dir,'png',f"{imgs.split('.')[0]}.png"))
         # h,w,c = img.shape
         # img = (img-img.min())/(img.max()-img.min())
-        exit()
+        # exit()
