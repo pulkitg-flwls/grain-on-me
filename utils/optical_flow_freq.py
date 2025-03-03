@@ -2,11 +2,9 @@ import os
 import cv2
 import numpy as np
 from tqdm import tqdm
-from scipy.ndimage import median_filter
-import dlib
-import pywt
-
 from argparse import ArgumentParser
+from util import adaptive_bilateral_blend,bilateral_frequency_blend
+
 def load_frames(input_folder):
     """Load all images from a directory and return sorted list of frames."""
     image_files = sorted([f for f in os.listdir(input_folder) if f.endswith(('.png', '.jpg', '.jpeg'))])
@@ -72,37 +70,6 @@ def warp_image(original_frame, flow):
     for c in range(original_frame.shape[2]):
         warped[..., c] = cv2.remap(original_frame[..., c], new_x.astype(np.float32), new_y.astype(np.float32), interpolation=cv2.INTER_LINEAR)
     return warped
-
-def preserve_high_frequency_details(ref_frame, blended_frame):
-    """Use wavelet decomposition to preserve sharp facial details in the blended frame."""
-    
-    # Convert to grayscale for wavelet processing
-    ref_gray = cv2.cvtColor(ref_frame, cv2.COLOR_BGR2GRAY)
-    blended_gray = cv2.cvtColor(blended_frame, cv2.COLOR_BGR2GRAY)
-
-    # Wavelet decomposition
-    coeffs_ref = pywt.dwt2(ref_gray, 'haar')
-    LL_ref, (LH_ref, HL_ref, HH_ref) = coeffs_ref
-
-    coeffs_blended = pywt.dwt2(blended_gray, 'haar')
-    LL_blended, (LH_blended, HL_blended, HH_blended) = coeffs_blended
-
-    # Blend high-frequency details from reference frame
-    LH_final = np.maximum(LH_ref, LH_blended)
-    HL_final = np.maximum(HL_ref, HL_blended)
-    HH_final = np.maximum(HH_ref, HH_blended)
-
-    # Reconstruct the final image with preserved high frequencies
-    final_gray = pywt.idwt2((LL_blended, (LH_final, HL_final, HH_final)), 'haar')
-    
-    # Replace the luminance channel in YCrCb for color accuracy
-    final_ycrcb = cv2.cvtColor(blended_frame, cv2.COLOR_BGR2YCrCb)
-    final_ycrcb[..., 0] = np.clip(final_gray, 0, 255)  # Replace Y channel
-
-    final_image = cv2.cvtColor(final_ycrcb, cv2.COLOR_YCrCb2BGR)
-    
-    return final_image
-
 
 def get_neighboring_frames(frames, index):
     """Return neighboring frames with distance-based weighting."""
@@ -215,24 +182,6 @@ def blend_frames(ref_frame, warped_neighbors, weights, occlusion_mask,edge_mask=
     
     return np.clip(final_output, 0, 255).astype(np.uint8)
 
-def generate_face_mask(image, detector):
-    """Generate a binary mask isolating the face region."""
-    
-    # Convert to grayscale for face detection
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Detect face
-    faces = detector(gray)
-
-    # Initialize face mask (all zeros)
-    face_mask = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
-
-    if len(faces) > 0:
-        x, y, w, h = faces[0].left(), faces[0].top(), faces[0].width(), faces[0].height()  # Use the first detected face
-        face_mask[y:y+h, x:x+w] = 1  # Fill the face region with 1s
-
-    return face_mask
-
 def compute_pixel_difference_mask(ref_frame, neighbor_frame, sigma=1.0):
     """Compute per-pixel difference mask using YCrCb luminance and adaptive thresholding."""
     
@@ -257,6 +206,9 @@ def compute_pixel_difference_mask(ref_frame, neighbor_frame, sigma=1.0):
 
     return weighted_mask
 
+
+
+
 def process_frames(input_folder, output_folder):
     """Main function: load frames, process, and save denoised frames."""
     frames, filenames = load_frames(input_folder)
@@ -269,8 +221,6 @@ def process_frames(input_folder, output_folder):
         # Blur frames before computing optical flow
         ref_frame_blurred = bilateral_filter_luminance(ref_frame)
         neighbors_blurred = [bilateral_filter_luminance(frame) for frame in neighbors]
-        # detector = dlib.get_frontal_face_detector()
-        # face_mask = generate_face_mask(ref_frame, detector)
         
         edge_mask = compute_adaptive_edge_mask(ref_frame)
         edge_mask = np.expand_dims(edge_mask, axis=-1)
@@ -307,10 +257,20 @@ def process_frames(input_folder, output_folder):
         weights = weights*pixel_diff_masks
 
         # Blend images while handling occlusions
-        denoised_frame = blend_frames(ref_frame_blurred, warped_neighbors, weights, final_occlusion_mask,edge_mask)
-        # Apply median filter to handle edges
-        # denoised_frame = median_filter(denoised_frame, size=(3, 3, 1))
-        # denoised_frame = bilateral_filter_luminance(denoised_frame,sigma_spatial=1)
+        # denoised_frame = bilateral_frequency_blend(
+        #     ref_frame, 
+        #     warped_neighbors, 
+        #     weights, 
+        #     final_occlusion_mask,
+        #     edge_mask
+        # )
+        denoised_frame = adaptive_bilateral_blend(
+            ref_frame, 
+            warped_neighbors, 
+            weights, 
+            final_occlusion_mask,
+            edge_mask
+        )
 
         # Save output
         cv2.imwrite(os.path.join(output_folder, filenames[i]), denoised_frame)
