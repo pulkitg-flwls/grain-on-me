@@ -131,7 +131,7 @@ def exr_to_png(input_exr, output_png, bit_depth=8, gamma=2.2):
     # Normalize HDR to LDR (tone mapping)
     image = np.clip(image, 0, None)  # Ensure non-negative values
     # image = image / (np.max(image) + 1e-6)  # Normalize to [0, 1]
-
+    image = image/(1+image)
     # Apply gamma correction
     image = np.power(image, 1/ gamma)
 

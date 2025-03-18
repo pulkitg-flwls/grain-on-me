@@ -55,7 +55,8 @@ def compute_ssim(clean, denoised):
     Computes Structural Similarity Index (SSIM).
     Higher SSIM indicates better perceptual similarity.
     """
-    return metrics.structural_similarity(clean, denoised, data_range=denoised.max() - denoised.min(),win_size=(3,3),channel_size=-1)
+    ssim= metrics.structural_similarity(clean, denoised,channel_axis=-1)
+    return ssim
 
 def compute_hfen(clean, denoised):
     """
@@ -238,39 +239,39 @@ def plot_relative_absolute_error(grainy, denoise,gt,crop,title,save_path):
     amplified_noise = np.power(amplified_noise, gamma)
 
     
-    denoise_crop = crop_png(denoise,crop)
-    gt_crop = crop_png(gt,crop)
-    grainy_crop = crop_png(grainy,crop)
+    # denoise_crop = crop_png(denoise,crop)
+    # gt_crop = crop_png(gt,crop)
+    # grainy_crop = crop_png(grainy,crop)
     # rae_crop = crop_png(rae,crop)
     # rae_crop = crop_png(amplified_noise,crop)
     # rae_image = visualize_amplified_noise_overlay(grainy_crop,gt_crop)
-    rae_image = compute_adaptive_edge_difference(gt_crop.astype('uint8'), denoise_crop.astype('uint8'))
-    # Plot results
+    # rae_image = compute_adaptive_edge_difference(gt_crop.astype('uint8'), denoise_crop.astype('uint8'))
+    # # Plot results
     
-    fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+    # fig, axes = plt.subplots(1, 4, figsize=(20, 5))
     
-    axes[0].imshow(grainy_crop.astype('uint8'), cmap='gray')
-    axes[0].set_title("Original Image")
-    axes[0].axis("off")
+    # axes[0].imshow(grainy_crop.astype('uint8'), cmap='gray')
+    # axes[0].set_title("Original Image")
+    # axes[0].axis("off")
 
-    axes[1].imshow(gt_crop.astype('uint8'), cmap='gray')
-    axes[1].set_title("NEAT Adjusted")
-    axes[1].axis("off")
+    # axes[1].imshow(gt_crop.astype('uint8'), cmap='gray')
+    # axes[1].set_title("NEAT Adjusted")
+    # axes[1].axis("off")
 
-    axes[2].imshow(denoise_crop.astype('uint8'), cmap='gray')
-    axes[2].set_title(title)
-    axes[2].axis("off")
+    # axes[2].imshow(denoise_crop.astype('uint8'), cmap='gray')
+    # axes[2].set_title(title)
+    # axes[2].axis("off")
 
-    axes[3].imshow(rae_image.astype('float32').clip(0,1), cmap='gray')
-    # print((rae*255).astype('uint8').max())
-    axes[3].set_title(f"Abs Error NEAT")
-    axes[3].axis("off")
-    # fig.colorbar(img_plot, ax=axes[2], fraction=0.046, pad=0.04)
+    # axes[3].imshow(rae_image.astype('float32').clip(0,1), cmap='gray')
+    # # print((rae*255).astype('uint8').max())
+    # axes[3].set_title(f"Abs Error NEAT")
+    # axes[3].axis("off")
+    # # fig.colorbar(img_plot, ax=axes[2], fraction=0.046, pad=0.04)
 
-    plt.tight_layout()
-    plt.savefig(save_path, dpi=400, bbox_inches='tight')
-    del fig,axes,grainy,grainy_crop,denoise,denoise_crop,gt,gt_crop, rae
-    gc.collect()
+    # plt.tight_layout()
+    # plt.savefig(save_path, dpi=400, bbox_inches='tight')
+    # del fig,axes,grainy,grainy_crop,denoise,denoise_crop,gt,gt_crop, rae
+    # gc.collect()
     return gt_rae.mean()
 
 def plot_ycbcr(grainy_image,denoise_image,output_path):
@@ -328,6 +329,7 @@ def process_single_image(args):
     nre = noise_residual_energy(grainy,denoise)
     hfen = compute_hfen(gt,denoise)
     psnr = compute_psnr(gt,denoise)
+    ssim = compute_ssim(gt,denoise)
     psnr_grainy = compute_psnr(grainy,denoise)
     
     rae_val = plot_relative_absolute_error(grainy,denoise,gt,rachel_vmd,title,output_path)
@@ -337,6 +339,7 @@ def process_single_image(args):
         'nre': nre,
         'hfen': hfen,
         'psnr': psnr,
+        'ssim': ssim,
         'psnr_grainy':psnr_grainy,
         'rae':rae_val
     }
@@ -344,7 +347,7 @@ def process_single_image(args):
 
 if __name__=="__main__":
     args = parse_args()
-    os.makedirs(args.output_dir,exist_ok=True)
+    # os.makedirs(args.output_dir,exist_ok=True)
     # os.makedirs(os.path.join(args.output_dir,'resize'),exist_ok=True)
     
     # nre, hfen, psnr,rae = [], [] ,[], []
@@ -363,6 +366,8 @@ if __name__=="__main__":
     nre = np.mean([d["nre"] for d in results])
     hfen = np.mean([d["hfen"] for d in results])
     psnr = np.mean([d["psnr"] for d in results])
+    ssim = np.mean([d["ssim"] for d in results])
     psnr_grainy = np.mean([d["psnr_grainy"] for d in results])
     rae = np.mean([d["rae"] for d in results])
-    print(f'NRE:{nre.mean():.3f}, HFEN:{hfen.mean():.3f}, PSNR:{psnr.mean():.3f}, AE:{rae.mean():.3f}, PSNR:{psnr_grainy.mean():.3f}')
+    print(f'NRE:{nre.mean():.3f}, HFEN:{hfen.mean():.3f}, PSNR:{psnr.mean():.3f}, \
+          AE:{rae.mean():.3f}, PSNR_Grainy:{psnr_grainy.mean():.3f}, SSIM: {ssim.mean():.3f}')
