@@ -68,6 +68,14 @@ def compute_hfen(clean, denoised):
     lap_denoised = laplace(denoised.astype(np.float32))
     return np.linalg.norm(lap_clean - lap_denoised) / np.linalg.norm(lap_clean)
 
+def compute_mae(clean, denoised):
+    """
+    Computes MAE.
+    Lower MAE.
+    """
+    mae = np.abs(clean,denoised).mean()
+    return mae
+
 def amplify_noise_residuals(grainy, denoised, scale_factor=5.0):
     """
     Computes and amplifies noise residuals for better visualization.
@@ -274,44 +282,6 @@ def plot_relative_absolute_error(grainy, denoise,gt,crop,title,save_path):
     # gc.collect()
     return gt_rae.mean()
 
-def plot_ycbcr(grainy_image,denoise_image,output_path):
-    ycbcr_grainy = cv2.cvtColor(grainy_image,cv2.COLOR_BGR2YCrCb)
-    ycbcr_denoise = cv2.cvtColor(denoise_image,cv2.COLOR_BGR2YCrCb)
-
-    y_g,cb_g,cr_g = cv2.split(ycbcr_grainy)
-    y_d,cb_d,cr_d = cv2.split(ycbcr_denoise)
-   
-    scale_factor=100.0
-    noise_Y = amplify_noise_residuals(y_g, y_d, scale_factor)
-    noise_Cb = amplify_noise_residuals(cb_g, cb_d, scale_factor)
-    noise_Cr = amplify_noise_residuals(cr_g, cr_d, scale_factor)
-    y_g = enhance_grain_subtle(y_g)
-    fig,axes = plt.subplots(2,2,figsize=(4,2))
-
-    axes[0, 0].imshow(cv2.cvtColor(grainy_image, cv2.COLOR_BGR2RGB))
-    axes[0, 0].set_title("Grainy Image",fontsize=8)
-    axes[0, 0].axis("off")
-
-    axes[0, 1].imshow(y_g, cmap="gray")
-    axes[0, 1].set_title("Y  Grainy",fontsize=8)
-    axes[0, 1].axis("off")
-
-    # Second row: Denoised Image
-    axes[1, 0].imshow(cv2.cvtColor(denoise_image, cv2.COLOR_BGR2RGB))
-    axes[1, 0].set_title("NEAT Default",fontsize=8)
-    axes[1, 0].axis("off")
-
-    axes[1, 1].imshow(noise_Y, cmap="seismic")
-    axes[1, 1].set_title("Y Noise Residual",fontsize=8)
-    axes[1, 1].axis("off")
-
-    plt.tight_layout()
-
-        # Save the figure
-    plt.savefig(output_path, dpi=800, bbox_inches="tight")
-    plt.close(fig)
-    del fig, axes, y_g, cb_g, cr_g, y_d, cb_d, cr_d, grainy_image,denoise_image
-    gc.collect()
 
 def process_single_image(args):
     grainy_path, denoise_path,gt_path,output_path,title = args
@@ -331,8 +301,8 @@ def process_single_image(args):
     psnr = compute_psnr(gt,denoise)
     ssim = compute_ssim(gt,denoise)
     psnr_grainy = compute_psnr(grainy,denoise)
-    
-    rae_val = plot_relative_absolute_error(grainy,denoise,gt,rachel_vmd,title,output_path)
+    mae = compute_mae(grainy,denoise)
+    # rae_val = plot_relative_absolute_error(grainy,denoise,gt,rachel_vmd,title,output_path)
     # plot_ycbcr(grainy,denoise,output_path)
     return {
         'img_name': grainy_path.split('/')[-1],
@@ -341,7 +311,7 @@ def process_single_image(args):
         'psnr': psnr,
         'ssim': ssim,
         'psnr_grainy':psnr_grainy,
-        'rae':rae_val
+        'mae':mae
     }
     
 
@@ -368,6 +338,6 @@ if __name__=="__main__":
     psnr = np.mean([d["psnr"] for d in results])
     ssim = np.mean([d["ssim"] for d in results])
     psnr_grainy = np.mean([d["psnr_grainy"] for d in results])
-    rae = np.mean([d["rae"] for d in results])
+    mae = np.mean([d["mae"] for d in results])
     print(f'NRE:{nre.mean():.3f}, HFEN:{hfen.mean():.3f}, PSNR:{psnr.mean():.3f}, \
-          AE:{rae.mean():.3f}, PSNR_Grainy:{psnr_grainy.mean():.3f}, SSIM: {ssim.mean():.3f}')
+          MAE:{mae.mean():.3f}, PSNR_Grainy:{psnr_grainy.mean():.3f}, SSIM: {ssim.mean():.3f}')
