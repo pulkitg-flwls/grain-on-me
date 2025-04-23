@@ -1,6 +1,11 @@
 # Grain-Degrain Project
 
+![Grain/Degrain](img.jpg)
 Code consisting of Grain/Degrain pipeline and analysis
 
-## Add Film Grain
-`python video_grain --input_dir <dir_with_video> --output_dir <output_dir> --easy_int 0.1 --hard_int 0.4 --blend_mode ADD --preset KODAK_VISION3`
+## Index
++ [dasgrain](./dasgrain/) : Functions to add grain in post processing
++ [denoising](./denoising/) : Functions to denoise in pre processing 
++ [vis](./vis/) : Functions to visualize results and measure quality
++ [utils](./utils/): Experimental functions to develop codebase
++ [dl](./dl/): DL Methods for denoising

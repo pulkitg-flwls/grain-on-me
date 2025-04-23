@@ -9,6 +9,7 @@ This repository consists of functions necessary to apply [DASGrain](https://www.
 + `scatter_grain.py` : `Scatter_Grain` that performs scattering for 1 set of plate.
 + `dasgrain.py` : Parallel processing code for adding grains to multiple set of plates
 + `noise_transfer.py` : Function for adding custom grain on a new set of plates
++ `patch_image.py` : Functions to generate noise patterns from patches
 
 ## Run
 To run DASGrain on the same set of movie plates
