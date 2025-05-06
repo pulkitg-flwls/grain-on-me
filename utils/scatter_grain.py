@@ -5,7 +5,8 @@ from scipy import ndimage, signal, fftpack
 from skimage.util import view_as_windows
 from scipy.fftpack import fft2, fftshift
 from voronoi import generate_voronoi_pattern, scatter_voronoi_cells
-from normalize import compute_response_curve,normalize_noise, add_adaptive_noise, fit_response_curve, tile_masked_region
+from normalize import compute_response_curve,normalize_noise, \
+    add_adaptive_noise, fit_response_curve, tile_masked_region, normalize_with_polynomial
 
 class ScatterGrain:
     """
@@ -62,6 +63,7 @@ class ScatterGrain:
         self.noise_stats = self.analyze_noise_statistics(self.extracted_noise)
         bin_centers, self.response_curve = compute_response_curve(self.extracted_noise, denoised_frame)
         self.fitted_curves, self.noise_func = fit_response_curve(bin_centers, self.response_curve)
+        self.polynomials = [np.poly1d(p) for p in self.fitted_curves]
         
         return self.extracted_noise
     
@@ -383,7 +385,8 @@ class ScatterGrain:
         """
         # 1. Extract the grain/noise from original footage
         self.extract_noise(original_plate, denoised_plate)
-        normalized_noise = normalize_noise(self.extracted_noise)
+        # normalized_noise = normalize_noise(self.extracted_noise)
+        normalized_noise = normalize_with_polynomial(self.extracted_noise,self.polynomials)
         # 2. Prepare the result image (start with edited plate)
         result = edited_plate.copy().astype('float32')
         # result = np.zeros(edited_plate.shape).astype('float32')

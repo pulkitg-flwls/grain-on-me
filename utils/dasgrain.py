@@ -68,24 +68,24 @@ if __name__ == "__main__":
 
     os.makedirs(args.output,exist_ok=True)
     img_pairs = []
-    # for i,imgs in enumerate(tqdm(sorted(os.listdir(args.noisy)))):
-    #     grainy_path = os.path.join(args.noisy,imgs)
-    #     denoise_path = os.path.join(args.denoised,imgs)
-    #     edited_path = os.path.join(args.edited,imgs)
-    #     # mask_path = args.mask
-    #     mask_path = os.path.join(args.mask,imgs)
-    #     output_path = os.path.join(args.output,imgs)
-    #     img_pairs.append((grainy_path,denoise_path,edited_path,mask_path,output_path))
+    for i,imgs in enumerate(tqdm(sorted(os.listdir(args.noisy)))):
+        grainy_path = os.path.join(args.noisy,imgs)
+        denoise_path = os.path.join(args.denoised,imgs)
+        edited_path = os.path.join(args.edited,imgs)
+        # mask_path = args.mask
+        mask_path = os.path.join(args.mask,imgs)
+        output_path = os.path.join(args.output,imgs)
+        img_pairs.append((grainy_path,denoise_path,edited_path,mask_path,output_path))
     
     # for srgb vmdf02_ep01_pt03_0050
-    for i,imgs in enumerate(tqdm(range(0,120))):
-        grainy_path = os.path.join(args.noisy,f"{imgs+1:06d}.jpg")
-        denoise_path = os.path.join(args.denoised,f"{imgs:06d}.jpg")
-        edited_path = os.path.join(args.edited,f"{imgs:06d}.jpg")
-        # mask_path = args.mask
-        mask_path = os.path.join(args.mask,f"{imgs:06d}.jpg")
-        output_path = os.path.join(args.output,f"{imgs:06d}.jpg")
-        img_pairs.append((grainy_path,denoise_path,edited_path,mask_path,output_path))
+    # for i,imgs in enumerate(tqdm(range(0,120))):
+    #     grainy_path = os.path.join(args.noisy,f"{imgs+1:06d}.jpg")
+    #     denoise_path = os.path.join(args.denoised,f"{imgs:06d}.jpg")
+    #     edited_path = os.path.join(args.edited,f"{imgs:06d}.jpg")
+    #     # mask_path = args.mask
+    #     mask_path = os.path.join(args.mask,f"{imgs:06d}.jpg")
+    #     output_path = os.path.join(args.output,f"{imgs:06d}.jpg")
+    #     img_pairs.append((grainy_path,denoise_path,edited_path,mask_path,output_path))
         
     num_workers = min(cpu_count(),len(img_pairs))
     # num_workers = 1

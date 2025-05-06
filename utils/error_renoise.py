@@ -241,22 +241,22 @@ if __name__=="__main__":
     # nre, hfen, psnr,rae = [], [] ,[], []
     img_pairs = []
     crop_coords = detect_face_in_first_frame(args.dir1)
-    # for i,imgs in enumerate(tqdm(os.listdir(args.dir1))):
-    #     grainy_path = os.path.join(args.dir1,imgs)
-    #     # denoise_path = os.path.join(args.dir3,imgs)
-    #     denoise_path = os.path.join(args.dir2,imgs)
-    #     renoise_path = os.path.join(args.dir3,imgs)
-    #     output_path = os.path.join(args.output_dir,imgs)
-    #     img_pairs.append((grainy_path,denoise_path,renoise_path,output_path,crop_coords,args.title))
-    # for srgb vmdf02_ep01_pt03_0050
-    for i,imgs in enumerate(tqdm(range(0,120))):
-        grainy_path = os.path.join(args.dir1,f"{imgs+1:06d}.jpg")
-        denoise_path = os.path.join(args.dir2,f"{imgs:06d}.jpg")
-        renoise_path = os.path.join(args.dir3,f"{imgs:06d}.jpg")
-        # mask_path = args.mask
-        # mask_path = os.path.join(args.mask,f"{imgs:06d}.jpg")
-        output_path = os.path.join(args.output_dir,f"{imgs:06d}.jpg")
+    for i,imgs in enumerate(tqdm(os.listdir(args.dir1))):
+        grainy_path = os.path.join(args.dir1,imgs)
+        # denoise_path = os.path.join(args.dir3,imgs)
+        denoise_path = os.path.join(args.dir2,imgs)
+        renoise_path = os.path.join(args.dir3,imgs)
+        output_path = os.path.join(args.output_dir,imgs)
         img_pairs.append((grainy_path,denoise_path,renoise_path,output_path,crop_coords,args.title))
+    # for srgb vmdf02_ep01_pt03_0050
+    # for i,imgs in enumerate(tqdm(range(0,120))):
+    #     grainy_path = os.path.join(args.dir1,f"{imgs+1:06d}.jpg")
+    #     denoise_path = os.path.join(args.dir2,f"{imgs:06d}.jpg")
+    #     renoise_path = os.path.join(args.dir3,f"{imgs:06d}.jpg")
+    #     # mask_path = args.mask
+    #     # mask_path = os.path.join(args.mask,f"{imgs:06d}.jpg")
+    #     output_path = os.path.join(args.output_dir,f"{imgs:06d}.jpg")
+    #     img_pairs.append((grainy_path,denoise_path,renoise_path,output_path,crop_coords,args.title))
         
     num_workers = min(cpu_count(),len(img_pairs))
     with Pool(processes=num_workers) as pool:

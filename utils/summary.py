@@ -19,7 +19,7 @@ def create_summary(base_dir):
     #     "dataset_name": f"dataset_name={os.path.basename(base_dir)}/dataset_version=v1"
     # }
     summary = {
-        "dataset_name": f"{dataset_name}/dataset_version=v1"
+        "dataset_name": f"{dataset_name}/dataset_version=restormer"
     }
     for shot_name in os.listdir(base_dir):
         shot_id = shot_name.split('=')[-1]
@@ -34,13 +34,13 @@ def create_summary(base_dir):
 
         num_frames = len([f for f in os.listdir(test_masks_path) if f.endswith(".png") or f.endswith(".jpg")])
         duration = get_video_duration(video_path)
-        # if 'book' in shot_id:
-        #     film_grain = True
-        # elif 'vmd' in shot_id:
-        #     film_grain = True
-        # elif 'smug' or 'ufo' in shot_id:
-        #     film_grain = False
-        film_grain=True
+        if 'book' in shot_id:
+            film_grain = True
+        elif 'vmd' in shot_id:
+            film_grain = True
+        elif 'smug' or 'ufo' in shot_id:
+            film_grain = False
+        # film_grain=True
         print(shot_id,film_grain)
         
         summary[shot_id] = {
